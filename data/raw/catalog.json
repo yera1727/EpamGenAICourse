@@ -1,0 +1,24 @@
+{
+  "dataset": "orbitra-support-kb",
+  "version": "1.0.0",
+  "description": "Synthetic customer-support knowledge base for the fictional smart-home brand Orbitra Home.",
+  "language": "en",
+  "created": "2026-11-26",
+  "products": [
+    {"product_id": "robovac-r7", "name": "Orbitra RoboVac R7", "category": "Robot vacuum & mop", "current_firmware": "2.4.0", "connected": true},
+    {"product_id": "brewmate-c3", "name": "Orbitra BrewMate C3", "category": "Bean-to-cup coffee machine", "current_firmware": "1.3.0", "connected": false},
+    {"product_id": "airpure-a5", "name": "Orbitra AirPure A5", "category": "Air purifier", "current_firmware": "1.0.5", "connected": true},
+    {"product_id": "thermosmart-t2", "name": "Orbitra ThermoSmart T2", "category": "Smart thermostat", "current_firmware": "3.1.0", "connected": true}
+  ],
+  "documents": [
+    {"doc_id": "manual-robovac-r7", "path": "manuals/robovac-r7.md", "doc_type": "manual", "product_id": "robovac-r7", "format": "markdown", "chunking": "section"},
+    {"doc_id": "manual-brewmate-c3", "path": "manuals/brewmate-c3.md", "doc_type": "manual", "product_id": "brewmate-c3", "format": "markdown", "chunking": "section"},
+    {"doc_id": "manual-airpure-a5", "path": "manuals/airpure-a5.md", "doc_type": "manual", "product_id": "airpure-a5", "format": "markdown", "chunking": "section"},
+    {"doc_id": "manual-thermosmart-t2", "path": "manuals/thermosmart-t2.md", "doc_type": "manual", "product_id": "thermosmart-t2", "format": "markdown", "chunking": "section"},
+    {"doc_id": "error-codes", "path": "troubleshooting/error_codes.csv", "doc_type": "troubleshooting", "product_id": "per-row", "format": "csv", "chunking": "row"},
+    {"doc_id": "faq", "path": "faq/faq.jsonl", "doc_type": "faq", "product_id": "per-row", "format": "jsonl", "chunking": "row"},
+    {"doc_id": "policy-warranty", "path": "policies/warranty.md", "doc_type": "policy", "product_id": "all", "format": "markdown", "chunking": "section"},
+    {"doc_id": "policy-returns-support", "path": "policies/returns-and-support.md", "doc_type": "policy", "product_id": "all", "format": "markdown", "chunking": "section"},
+    {"doc_id": "release-notes-firmware", "path": "release_notes/firmware.md", "doc_type": "release_notes", "product_id": "per-section", "format": "markdown", "chunking": "section"}
+  ]
+}
