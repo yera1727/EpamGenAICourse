@@ -129,9 +129,10 @@ Every source unit is annotated so that each future chunk can carry rich metadata
 | Layer | Choice | Notes |
 |---|---|---|
 | Language | Python 3.11+ | |
-| Vector DB | **Qdrant** (Docker image `qdrant/qdrant`) | Free, local, native vector search + payload filtering, web dashboard on `:6333/dashboard`. |
-| Embeddings | `text-embedding-3-small` via DIAL (OpenAI-compatible API) | 1536-dim vectors, cosine distance. Model name and dimension are configurable. |
-| LLM | `gpt-4o` (or other DIAL deployment) | Configurable deployment name; temperature ≈ 0.1 for factual answers. |
+| Vector DB | **Qdrant 1.20** (Docker image `qdrant/qdrant:v1.20.2`) | Free, local, native vector search + payload filtering, web dashboard on `:6333/dashboard`. Accessed via its REST API with `httpx` (the official `qdrant-client` pulls in `grpcio`, whose native DLL is blocked by Windows Application Control on the dev machine). |
+| Provider | **Google Gemini** via its OpenAI-compatible endpoint (default); EPAM DIAL and OpenAI also supported | Switched with `PROVIDER` in `.env`; one `openai` SDK client for all of them. |
+| Embeddings | `gemini-embedding-001` | 3072-dim vectors, cosine distance. Model name and dimension are configurable. |
+| LLM | `gemini-2.5-flash` | Configurable model name; temperature ≈ 0.1 for factual answers. |
 | UI | Streamlit | Plus a minimal CLI for quick testing. |
 | Config | `.env` file (`DIAL_API_KEY`, `DIAL_ENDPOINT`, model names, Qdrant URL) | Secrets are never committed (`.env.example` only). |
 | Infrastructure | `docker-compose.yml` for Qdrant | Persistent volume for DB storage. |
@@ -153,7 +154,44 @@ Planned repository layout:
 └── .env.example
 ```
 
-## 6. Requirements
+## 6. How to run
+
+Prerequisites: Python 3.11+, Docker Desktop (WSL2 backend on Windows), a DIAL API key.
+
+```powershell
+# 1. Vector DB (step 3)
+docker compose up -d                       # Qdrant on http://localhost:6333
+
+# 2. Python environment
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+pip install -e .                           # installs the src/orbitra_rag package
+
+# 3. Configuration
+copy .env.example .env                     # then put your DIAL_API_KEY into .env
+
+# 4. Checks
+python scripts/init_db.py                  # step 3: DB smoke test + create the 'orbitra_kb' collection
+python -m unittest discover -s tests -v    # step 4: offline tests of the embeddings client
+python scripts/check_embeddings.py         # step 4: live embeddings call + similarity matrix
+```
+
+### Implementation status
+
+| Step | Status | Artifacts |
+|---|---|---|
+| 1. Project description | done | `README.md` |
+| 2. Dataset | done | `data/` |
+| 3. Local vector DB | done | `docker-compose.yml`, `src/orbitra_rag/vector_store.py`, `scripts/init_db.py` |
+| 4. Embeddings client | done | `src/orbitra_rag/embeddings.py`, `src/orbitra_rag/providers.py`, `scripts/check_embeddings.py`, `tests/test_embeddings.py` |
+| 5. Data ingestion | todo | |
+| 6. LLM client | todo | |
+| 7. UI | todo | |
+| 8. RAG pipeline | todo | |
+| 9. Demo video | todo | |
+
+## 7. Requirements
 
 ### Functional
 
@@ -172,7 +210,7 @@ Planned repository layout:
 * NFR-3. Secrets are stored only in environment variables / `.env`.
 * NFR-4. Ingestion is idempotent and reproducible.
 
-## 7. Limitations
+## 8. Limitations
 
 * **Synthetic data.** The dataset describes fictional products; it is small (9 source files,
   ~120 chunks) but representative of a real support knowledge base.

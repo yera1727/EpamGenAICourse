@@ -8,3 +8,4 @@ qdrant_storage/
 .streamlit/secrets.toml
 .idea/
 .vscode/
+*.egg-info/
