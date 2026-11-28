@@ -6,6 +6,16 @@ headless = true
 [browser]
 gatherUsageStats = false
 
-[theme]
-base = "light"
+# Two themes: the app follows the OS setting by default, and the user can switch
+# Light / Dark / System in the app menu (top right ⋮ -> Settings -> Theme).
+[theme.light]
 primaryColor = "#2563eb"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f1f5f9"
+textColor = "#0f172a"
+
+[theme.dark]
+primaryColor = "#60a5fa"
+backgroundColor = "#0f172a"
+secondaryBackgroundColor = "#1e293b"
+textColor = "#e2e8f0"
