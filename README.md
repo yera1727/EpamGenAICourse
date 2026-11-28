@@ -121,7 +121,9 @@ Every source unit is annotated so that each future chunk can carry rich metadata
 
 * Answer **only** using the provided context; if the context is insufficient, say so and suggest
   contacting Orbitra support.
-* Cite sources as `[doc_id › section]`.
+* Retrieved chunks are numbered in the prompt (`[1] source: doc_id › section`), and the model cites
+  them by number (`[1]`, `[2][4]`); the UI shows the matching numbered source list.
+* Questions that are not about Orbitra products are politely declined.
 * Keep answers short and actionable (numbered steps for procedures).
 
 ## 5. System technical details
@@ -181,7 +183,30 @@ python scripts/ingest.py                   # step 5: chunk -> embed -> upload th
 python scripts/eval_retrieval.py           # step 5: retrieval quality on the evaluation set
 python scripts/check_llm.py                # step 6: simple request/response with the LLM
 python scripts/check_llm.py --chat         # step 6: interactive streaming chat in the terminal
+
+# 5. The RAG system
+python -m streamlit run app.py             # steps 7-8: web UI on http://localhost:8501
+python scripts/ask.py "My vacuum shows E06" --compare   # CLI: RAG answer + answer without RAG
 ```
+
+> On Windows with Smart App Control, the `streamlit.exe` launcher may be blocked, so always use
+> `python -m streamlit run app.py`.
+
+### How a question flows through the system
+
+1. **UI** (`app.py`): the user types a question, optionally picks a product filter and top-k.
+2. **Query embedding** (`EmbeddingsClient.embed_query`): the question becomes a 3072-dim vector
+   (the same model as for the dataset).
+3. **Vector search** (`VectorStore.search`): Qdrant returns the top-k most similar chunks
+   (cosine similarity, filtered by `product_id` plus cross-product `all` docs).
+4. **Prompt + LLM** (`RAGPipeline.build_messages`, `LLMClient.stream`): system rules + the numbered
+   chunks + the original question go to the LLM in one context window; the answer is streamed back
+   to the UI together with the sources, similarity scores and timings.
+
+The UI also has a **"Compare with LLM without RAG"** switch that asks the same model the same
+question without context. For example, for *"My vacuum shows E06"* the plain LLM invents a "suction
+fan motor failure", while the RAG answer correctly says "LiDAR sensor blocked" and cites the error
+code table.
 
 ### Retrieval quality
 
@@ -208,8 +233,8 @@ to the grounding instructions of the LLM prompt.
 | 4. Embeddings client | done | `src/orbitra_rag/embeddings.py`, `src/orbitra_rag/providers.py`, `scripts/check_embeddings.py`, `tests/test_embeddings.py` |
 | 5. Data ingestion | done | `src/orbitra_rag/chunking.py`, `scripts/ingest.py`, `data/processed/chunks.jsonl`, `scripts/eval_retrieval.py`, `tests/test_chunking.py` |
 | 6. LLM client | done | `src/orbitra_rag/llm.py`, `scripts/check_llm.py`, `tests/test_llm.py` |
-| 7. UI | todo | |
-| 8. RAG pipeline | todo | |
+| 7. UI | done | `app.py` (Streamlit), `.streamlit/config.toml`, `scripts/ask.py` (CLI) |
+| 8. RAG pipeline | done | `src/orbitra_rag/rag.py`, `tests/test_rag.py` |
 | 9. Demo video | todo | |
 
 ## 7. Requirements
