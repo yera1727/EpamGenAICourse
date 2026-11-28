@@ -61,7 +61,7 @@ def get_settings() -> Settings:
         embedding_dim=int(_env("EMBEDDING_DIM", "3072")),
         embedding_send_dimensions=_env_bool("EMBEDDING_SEND_DIMENSIONS", False),
         embedding_batch_size=int(_env("EMBEDDING_BATCH_SIZE", "64")),
-        chat_model=_env("CHAT_MODEL", "gemini-2.5-flash"),
+        chat_model=_env("CHAT_MODEL", "gemini-3.5-flash"),
         qdrant_url=_env("QDRANT_URL", "http://localhost:6333"),
         qdrant_collection=_env("QDRANT_COLLECTION", "orbitra_kb"),
     )

@@ -69,8 +69,8 @@ class EmbeddingsClient:
 
     @retry(
         retry=retry_if_exception_type(_RETRYABLE),
-        wait=wait_exponential(multiplier=1, min=1, max=20),
-        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=2, min=2, max=60),  # free tiers have per-minute quotas
+        stop=stop_after_attempt(6),
         reraise=True,
     )
     def _embed_batch(self, batch: list[str]) -> list[list[float]]:

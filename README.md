@@ -132,7 +132,7 @@ Every source unit is annotated so that each future chunk can carry rich metadata
 | Vector DB | **Qdrant 1.20** (Docker image `qdrant/qdrant:v1.20.2`) | Free, local, native vector search + payload filtering, web dashboard on `:6333/dashboard`. Accessed via its REST API with `httpx` (the official `qdrant-client` pulls in `grpcio`, whose native DLL is blocked by Windows Application Control on the dev machine). |
 | Provider | **Google Gemini** via its OpenAI-compatible endpoint (default); EPAM DIAL and OpenAI also supported | Switched with `PROVIDER` in `.env`; one `openai` SDK client for all of them. |
 | Embeddings | `gemini-embedding-001` | 3072-dim vectors, cosine distance. Model name and dimension are configurable. |
-| LLM | `gemini-2.5-flash` | Configurable model name; temperature ≈ 0.1 for factual answers. |
+| LLM | `gemini-3.5-flash` | Configurable model name; temperature ≈ 0.1 for factual answers. |
 | UI | Streamlit | Plus a minimal CLI for quick testing. |
 | Config | `.env` file (`DIAL_API_KEY`, `DIAL_ENDPOINT`, model names, Qdrant URL) | Secrets are never committed (`.env.example` only). |
 | Infrastructure | `docker-compose.yml` for Qdrant | Persistent volume for DB storage. |
@@ -148,7 +148,8 @@ Planned repository layout:
 │   └── eval/                  # evaluation questions
 ├── docker-compose.yml         # Qdrant
 ├── src/orbitra_rag/           # chunking, embeddings client, vector store, LLM client, RAG pipeline
-├── scripts/ingest.py          # fill the DB
+├── scripts/                   # init_db, check_embeddings, ingest, eval_retrieval, check_llm
+├── tests/                     # offline unit tests
 ├── app.py                     # Streamlit UI
 ├── requirements.txt
 └── .env.example
@@ -156,7 +157,8 @@ Planned repository layout:
 
 ## 6. How to run
 
-Prerequisites: Python 3.11+, Docker Desktop (WSL2 backend on Windows), a DIAL API key.
+Prerequisites: Python 3.11+, Docker Desktop (WSL2 backend on Windows), a Google Gemini API key
+(free at https://aistudio.google.com) or a DIAL / OpenAI key.
 
 ```powershell
 # 1. Vector DB (step 3)
@@ -169,13 +171,32 @@ pip install -r requirements.txt
 pip install -e .                           # installs the src/orbitra_rag package
 
 # 3. Configuration
-copy .env.example .env                     # then put your DIAL_API_KEY into .env
+copy .env.example .env                     # then put your GEMINI_API_KEY into .env
 
-# 4. Checks
+# 4. Checks and data loading
+python -m unittest discover -s tests -v    # offline unit tests (no API key needed)
 python scripts/init_db.py                  # step 3: DB smoke test + create the 'orbitra_kb' collection
-python -m unittest discover -s tests -v    # step 4: offline tests of the embeddings client
 python scripts/check_embeddings.py         # step 4: live embeddings call + similarity matrix
+python scripts/ingest.py                   # step 5: chunk -> embed -> upload the dataset (~1 min)
+python scripts/eval_retrieval.py           # step 5: retrieval quality on the evaluation set
+python scripts/check_llm.py                # step 6: simple request/response with the LLM
+python scripts/check_llm.py --chat         # step 6: interactive streaming chat in the terminal
 ```
+
+### Retrieval quality
+
+`scripts/eval_retrieval.py` on the 27 answerable evaluation questions (no product filter, top-5):
+
+| Metric | Value |
+|---|---|
+| hit@1 | 88.9% |
+| hit@3 | 100% |
+| hit@5 | 100% |
+| MRR@5 | 0.938 |
+
+Out-of-scope questions still get similarity scores of 0.46–0.72, which overlap with relevant
+results. A fixed score threshold therefore cannot reliably detect "no answer" cases, so this is left
+to the grounding instructions of the LLM prompt.
 
 ### Implementation status
 
@@ -185,8 +206,8 @@ python scripts/check_embeddings.py         # step 4: live embeddings call + simi
 | 2. Dataset | done | `data/` |
 | 3. Local vector DB | done | `docker-compose.yml`, `src/orbitra_rag/vector_store.py`, `scripts/init_db.py` |
 | 4. Embeddings client | done | `src/orbitra_rag/embeddings.py`, `src/orbitra_rag/providers.py`, `scripts/check_embeddings.py`, `tests/test_embeddings.py` |
-| 5. Data ingestion | todo | |
-| 6. LLM client | todo | |
+| 5. Data ingestion | done | `src/orbitra_rag/chunking.py`, `scripts/ingest.py`, `data/processed/chunks.jsonl`, `scripts/eval_retrieval.py`, `tests/test_chunking.py` |
+| 6. LLM client | done | `src/orbitra_rag/llm.py`, `scripts/check_llm.py`, `tests/test_llm.py` |
 | 7. UI | todo | |
 | 8. RAG pipeline | todo | |
 | 9. Demo video | todo | |
